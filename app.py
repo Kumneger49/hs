@@ -21,6 +21,31 @@ st.set_page_config(
     page_icon="🩺",
 )
 
+# Add custom CSS for background image
+st.markdown("""
+    <style>
+    .stApp {
+        background-image: url("Menus régime IG _ une semaine d'idées menu index glycémique.jpeg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+    .stApp > header {
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+    .main .block-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .stSidebar {
+        background-color: rgba(255, 255, 255, 0.95);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 ## Step 01 - Setup
 st.sidebar.title("Diabetes Analysis Dashboard 🩺")
 page = st.sidebar.selectbox("Select Page", ["Introduction 📘", "Data Exploration 📊", "Visualization 📈", "Automated Report 📑"])
@@ -56,16 +81,6 @@ df = load_data()
 if page == "Introduction 📘":
     st.title("Diabetes Analysis Dashboard 🩺")
     st.write("Explore diabetes patient data and medical indicators >>")
-    
-    # Display glycemic index menu image
-    try:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.image("Menus régime IG _ une semaine d'idées menu index glycémique.jpeg", 
-                     width='stretch', 
-                     caption="Glycemic Index Menu Guide")
-    except:
-        pass
     
     st.subheader("01 Introduction 📘")
     
