@@ -25,12 +25,13 @@ st.set_page_config(
 st.sidebar.title("Diabetes Analysis Dashboard 🩺")
 page = st.sidebar.selectbox("Select Page", ["Introduction 📘", "Data Exploration 📊", "Visualization 📈", "Automated Report 📑"])
 
-# Optional image - comment out if image not available
-# st.image("house.png")  # or "house2.png"
-# st.image("house2.png")
+# Display diabetes medical composition image
+try:
+    st.image("Free Vector _ Diabetes flat composition medical  with patient symptoms complications blood sugar meter treatments and medication.jpeg", 
+             width='stretch')
+except:
+    pass
 
-st.write("   ")
-st.write("   ")
 st.write("   ")
 
 ## Step 02 - Load dataset
@@ -55,6 +56,16 @@ df = load_data()
 if page == "Introduction 📘":
     st.title("Diabetes Analysis Dashboard 🩺")
     st.write("Explore diabetes patient data and medical indicators >>")
+    
+    # Display glycemic index menu image
+    try:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.image("Menus régime IG _ une semaine d'idées menu index glycémique.jpeg", 
+                     width='stretch', 
+                     caption="Glycemic Index Menu Guide")
+    except:
+        pass
     
     st.subheader("01 Introduction 📘")
     
