@@ -16,13 +16,13 @@ except ImportError:
 
 # Page configuration
 st.set_page_config(
-    page_title="California Housing Dashboard 🏡",
+    page_title="Diabetes Analysis Dashboard 🩺",
     layout="centered",
-    page_icon="🏡",
+    page_icon="🩺",
 )
 
 ## Step 01 - Setup
-st.sidebar.title("California - Real Estate Agency 🏡")
+st.sidebar.title("Diabetes Analysis Dashboard 🩺")
 page = st.sidebar.selectbox("Select Page", ["Introduction 📘", "Data Exploration 📊", "Visualization 📈", "Automated Report 📑"])
 
 # Optional image - comment out if image not available
@@ -36,8 +36,8 @@ st.write("   ")
 ## Step 02 - Load dataset
 @st.cache_data
 def load_data():
-    """Load and cache the housing dataset with Arrow compatibility"""
-    df = pd.read_csv("housing.csv")
+    """Load and cache the diabetes dataset with Arrow compatibility"""
+    df = pd.read_csv("diabetes.csv")
     # Fix Arrow compatibility issues by ensuring proper data types
     # Convert object columns to string for better Arrow compatibility
     for col in df.select_dtypes(include=['object']).columns:
@@ -53,8 +53,8 @@ df = load_data()
 ## Step 03 - Page Navigation
 
 if page == "Introduction 📘":
-    st.title("California - Real Estate Agency 🏡")
-    st.write("Explore the portfolio of our real estate agency in a nice way >>")
+    st.title("Diabetes Analysis Dashboard 🩺")
+    st.write("Explore diabetes patient data and medical indicators >>")
     
     st.subheader("01 Introduction 📘")
     
@@ -119,32 +119,44 @@ elif page == "Visualization 📈":
         "Line Chart 📈", 
         "Correlation Heatmap 🔥",
         "Custom Visualization 🎨",
-        "Ocean Proximity Analysis 🌊"
+        "Outcome Analysis 📊"
     ])
     
     with tab1:
         st.subheader("Bar Chart - Seaborn")
-        if len(categorical_cols) > 0 and len(numeric_cols) > 0:
-            cat_col = st.selectbox("Select categorical variable (X-axis)", categorical_cols, key="bar_cat")
-            num_col = st.selectbox("Select numeric variable (Y-axis)", numeric_cols, key="bar_num")
+        # For diabetes dataset, use Outcome as categorical or create bins for numeric columns
+        if len(numeric_cols) > 0:
+            # Use Outcome column if available, otherwise use first numeric column with few unique values
+            cat_options = ['Outcome'] if 'Outcome' in df.columns else []
+            # Add numeric columns with few unique values as categorical options
+            for col in numeric_cols:
+                if df[col].nunique() <= 10 and col not in cat_options:
+                    cat_options.append(col)
             
-            # Aggregate data for bar chart
-            if cat_col and num_col:
-                agg_data = df.groupby(cat_col)[num_col].mean().reset_index()
+            if len(cat_options) > 0 and len(numeric_cols) > 0:
+                cat_col = st.selectbox("Select categorical variable (X-axis)", cat_options, key="bar_cat")
+                num_col = st.selectbox("Select numeric variable (Y-axis)", numeric_cols, key="bar_num")
                 
-                # Create the plot with seaborn
-                fig_bar, ax_bar = plt.subplots(figsize=(12, 6))
-                sns.barplot(data=agg_data, x=cat_col, y=num_col, ax=ax_bar)
-                ax_bar.set_title(f"Average {num_col} by {cat_col}")
-                ax_bar.set_xlabel(cat_col)
-                ax_bar.set_ylabel(num_col)
-                plt.xticks(rotation=45)
-                st.pyplot(fig_bar)
-                
-                st.subheader("Bar Chart - Streamlit")
-                st.bar_chart(agg_data.set_index(cat_col))
+                # Aggregate data for bar chart
+                if cat_col and num_col:
+                    agg_data = df.groupby(cat_col)[num_col].mean().reset_index()
+                    
+                    # Create the plot with seaborn
+                    fig_bar, ax_bar = plt.subplots(figsize=(12, 6))
+                    agg_data[cat_col] = agg_data[cat_col].astype(str)
+                    sns.barplot(data=agg_data, x=cat_col, y=num_col, ax=ax_bar)
+                    ax_bar.set_title(f"Average {num_col} by {cat_col}")
+                    ax_bar.set_xlabel(cat_col)
+                    ax_bar.set_ylabel(num_col)
+                    plt.xticks(rotation=45)
+                    st.pyplot(fig_bar)
+                    
+                    st.subheader("Bar Chart - Streamlit")
+                    st.bar_chart(agg_data.set_index(cat_col))
+            else:
+                st.info("No suitable columns available for bar chart")
         else:
-            st.info("No categorical columns available for bar chart")
+            st.info("No numeric columns available for bar chart")
     
     with tab2:
         st.subheader("Line Chart")
@@ -169,7 +181,7 @@ elif page == "Visualization 📈":
         user_selection = st.multiselect(
             "Select the variables that you want for the corr matrix",
             list(df_numeric.columns),
-            default=["latitude", "longitude", "median_income", "median_house_value"]
+            default=["Glucose", "BMI", "Age", "Outcome"]
         )
         
         if len(user_selection) > 1:
@@ -222,32 +234,51 @@ elif page == "Visualization 📈":
                 st.warning("Both axes must be numeric for scatter plot")
     
     with tab5:
-        st.subheader("Ocean Proximity Analysis 🌊")
+        st.subheader("Outcome Analysis 📊")
         
-        # Bar chart - Ocean Proximity vs Median House Value (from Template 1)
-        st.markdown("##### Bar Chart - Ocean Proximity vs Median House Value")
-        
-        fig_ocean, ax_ocean = plt.subplots(figsize=(12, 6))
-        ocean_data = df.groupby("ocean_proximity")["median_house_value"].mean().reset_index()
-        sns.barplot(data=ocean_data, x="ocean_proximity", y="median_house_value", ax=ax_ocean)
-        ax_ocean.set_title("Average Median House Value by Ocean Proximity")
-        ax_ocean.set_xlabel("Ocean Proximity")
-        ax_ocean.set_ylabel("Median House Value ($)")
-        plt.xticks(rotation=45)
-        st.pyplot(fig_ocean)
-        
-        # Streamlit bar chart version
-        st.markdown("##### Streamlit Bar Chart")
-        st.bar_chart(ocean_data.set_index("ocean_proximity"))
-        
-        # Statistics by ocean proximity
-        st.markdown("##### Statistics by Ocean Proximity")
-        ocean_stats = df.groupby("ocean_proximity").agg({
-            'median_house_value': ['mean', 'median', 'std', 'min', 'max'],
-            'median_income': ['mean', 'median'],
-            'housing_median_age': ['mean', 'median']
-        }).round(2)
-        st.dataframe(ocean_stats)
+        if 'Outcome' in df.columns:
+            # Bar chart - Outcome vs key medical indicators
+            st.markdown("##### Average Medical Indicators by Diabetes Outcome")
+            
+            # Select which medical indicator to compare
+            indicator = st.selectbox("Select medical indicator", 
+                                    [col for col in df.columns if col != 'Outcome' and df[col].dtype in ['int64', 'float64']],
+                                    index=0 if 'Glucose' in df.columns else 0)
+            
+            outcome_data = df.groupby("Outcome")[indicator].mean().reset_index()
+            outcome_data['Outcome'] = outcome_data['Outcome'].map({0: 'No Diabetes', 1: 'Diabetes'})
+            
+            fig_outcome, ax_outcome = plt.subplots(figsize=(12, 6))
+            sns.barplot(data=outcome_data, x="Outcome", y=indicator, ax=ax_outcome)
+            ax_outcome.set_title(f"Average {indicator} by Diabetes Outcome")
+            ax_outcome.set_xlabel("Outcome")
+            ax_outcome.set_ylabel(indicator)
+            plt.xticks(rotation=0)
+            st.pyplot(fig_outcome)
+            
+            # Streamlit bar chart version
+            st.markdown("##### Streamlit Bar Chart")
+            st.bar_chart(outcome_data.set_index("Outcome"))
+            
+            # Statistics by outcome
+            st.markdown("##### Statistics by Outcome")
+            outcome_stats = df.groupby("Outcome").agg({
+                'Glucose': ['mean', 'median', 'std'] if 'Glucose' in df.columns else [],
+                'BMI': ['mean', 'median', 'std'] if 'BMI' in df.columns else [],
+                'Age': ['mean', 'median', 'std'] if 'Age' in df.columns else [],
+                'BloodPressure': ['mean', 'median', 'std'] if 'BloodPressure' in df.columns else []
+            }).round(2)
+            # Filter out empty columns
+            outcome_stats = outcome_stats.loc[:, (outcome_stats != 0).any(axis=0)]
+            st.dataframe(outcome_stats)
+            
+            # Outcome distribution
+            st.markdown("##### Outcome Distribution")
+            outcome_counts = df['Outcome'].value_counts()
+            outcome_counts.index = outcome_counts.index.map({0: 'No Diabetes', 1: 'Diabetes'})
+            st.bar_chart(outcome_counts)
+        else:
+            st.info("Outcome column not found in dataset")
 
 elif page == "Automated Report 📑":
     st.subheader("04 Automated Report")
@@ -258,7 +289,7 @@ elif page == "Automated Report 📑":
                 try:
                     profile = ProfileReport(
                         df, 
-                        title="California Housing Report",
+                        title="Diabetes Dataset Report",
                         explorative=True,
                         minimal=True
                     )
@@ -268,7 +299,7 @@ elif page == "Automated Report 📑":
                     st.download_button(
                         label="📥 Download full Report",
                         data=export,
-                        file_name="california_housing_report.html",
+                        file_name="diabetes_dataset_report.html",
                         mime='text/html'
                     )
                 except Exception as e:
@@ -298,9 +329,10 @@ elif page == "Automated Report 📑":
 st.sidebar.markdown("---")
 st.sidebar.markdown("### About")
 st.sidebar.info("""
-This dashboard explores the California Housing dataset with:
+This dashboard explores the Diabetes dataset with:
 - Data exploration and statistics
 - Interactive visualizations
 - Correlation analysis
+- Outcome analysis
 - Automated reporting (if available)
 """)

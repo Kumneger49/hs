@@ -1,6 +1,6 @@
-# California Housing Dashboard 🏡
+# Diabetes Analysis Dashboard 🩺
 
-A comprehensive Streamlit dashboard for exploring the California Housing dataset, combining features from multiple templates.
+A comprehensive Streamlit dashboard for exploring the Diabetes dataset, combining features from multiple templates.
 
 ## Features
 
@@ -11,7 +11,7 @@ A comprehensive Streamlit dashboard for exploring the California Housing dataset
   - Line charts
   - Correlation heatmaps
   - Custom visualizations
-  - Ocean proximity analysis
+  - Outcome analysis (Diabetes vs No Diabetes)
 - **Automated Report**: Data profiling report (optional, requires additional packages)
 
 ## Installation
@@ -22,7 +22,7 @@ A comprehensive Streamlit dashboard for exploring the California Housing dataset
    ```
 
 2. **Ensure you have the dataset**:
-   - Make sure `housing.csv` is in the same directory as `app.py`
+   - Make sure `diabetes.csv` is in the same directory as `app.py`
 
 ## Running the App
 
@@ -55,7 +55,7 @@ The app will open in your default browser at `http://localhost:8501`
 ```
 .
 ├── app.py              # Main Streamlit application
-├── housing.csv         # Dataset file
+├── diabetes.csv        # Dataset file
 ├── requirements.txt    # Python dependencies
 └── README.md          # This file
 ```
@@ -78,14 +78,12 @@ These are included in `requirements.txt` but the app will work without them (the
 
 ## Dataset Information
 
-- **Rows**: 20,640
-- **Columns**: 10
+- **Rows**: 768
+- **Columns**: 9
 - **Features**: 
-  - Geographic: longitude, latitude
-  - Housing: housing_median_age, total_rooms, total_bedrooms, households
-  - Demographics: population, median_income
-  - Target: median_house_value
-  - Categorical: ocean_proximity
+  - Medical: Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI
+  - Demographic: Age, DiabetesPedigreeFunction
+  - Target: Outcome (0 = No Diabetes, 1 = Diabetes)
 
 ## Troubleshooting
 
@@ -100,7 +98,7 @@ streamlit run app.py --server.port 8502
 ```
 
 ### Dataset Not Found
-Ensure `housing.csv` is in the same directory as `app.py`
+Ensure `diabetes.csv` is in the same directory as `app.py`
 
 ## License
 
