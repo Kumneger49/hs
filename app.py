@@ -294,46 +294,175 @@ elif page == "Visualization 📈":
 elif page == "Automated Report 📑":
     st.subheader("04 Automated Report")
     
-    if PROFILING_AVAILABLE:
-        if st.button("Generate Report"):
-            with st.spinner("Generating report... This may take a few minutes."):
-                try:
-                    profile = ProfileReport(
-                        df, 
-                        title="Diabetes Dataset Report",
-                        explorative=True,
-                        minimal=True
-                    )
-                    st_profile_report(profile)
+    if st.button("Generate Comprehensive Report"):
+        with st.spinner("Generating report... This may take a moment."):
+            # Create a comprehensive report using Streamlit
+            report_sections = []
+            
+            # 1. Dataset Overview
+            st.markdown("## 📊 Dataset Overview")
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total Rows", f"{df.shape[0]:,}")
+            with col2:
+                st.metric("Total Columns", df.shape[1])
+            with col3:
+                st.metric("Numeric Columns", len(df.select_dtypes(include=[np.number]).columns))
+            with col4:
+                st.metric("Missing Values", int(df.isnull().sum().sum()))
+            
+            st.markdown("---")
+            
+            # 2. Data Types Summary
+            st.markdown("## 📋 Data Types Summary")
+            dtype_summary = pd.DataFrame({
+                'Column': df.dtypes.index,
+                'Data Type': df.dtypes.values,
+                'Non-Null Count': df.count().values,
+                'Null Count': df.isnull().sum().values
+            })
+            st.dataframe(dtype_summary)
+            
+            st.markdown("---")
+            
+            # 3. Statistical Summary
+            st.markdown("## 📈 Statistical Summary")
+            st.dataframe(df.describe())
+            
+            st.markdown("---")
+            
+            # 4. Missing Values Analysis
+            st.markdown("## 🔍 Missing Values Analysis")
+            missing_data = df.isnull().sum()
+            missing_data = missing_data[missing_data > 0]
+            if len(missing_data) > 0:
+                missing_df = pd.DataFrame({
+                    'Column': missing_data.index,
+                    'Missing Count': missing_data.values,
+                    'Missing Percentage': (missing_data.values / len(df) * 100).round(2)
+                })
+                st.dataframe(missing_df)
+            else:
+                st.success("✅ No missing values found in the dataset!")
+            
+            st.markdown("---")
+            
+            # 5. Correlation Matrix
+            st.markdown("## 🔗 Correlation Matrix")
+            numeric_df = df.select_dtypes(include=[np.number])
+            if len(numeric_df.columns) > 1:
+                fig_corr, ax_corr = plt.subplots(figsize=(12, 10))
+                sns.heatmap(numeric_df.corr(), annot=True, fmt=".2f", cmap='coolwarm', 
+                           center=0, square=True, linewidths=1, cbar_kws={"shrink": 0.8}, ax=ax_corr)
+                ax_corr.set_title("Correlation Heatmap - All Numeric Variables")
+                st.pyplot(fig_corr)
+                st.dataframe(numeric_df.corr())
+            
+            st.markdown("---")
+            
+            # 6. Distribution Analysis
+            st.markdown("## 📊 Distribution Analysis")
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if len(numeric_cols) > 0:
+                selected_col = st.selectbox("Select column for distribution analysis", numeric_cols, key="dist_col")
+                if selected_col:
+                    fig_dist, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
                     
-                    export = profile.to_html()
-                    st.download_button(
-                        label="📥 Download full Report",
-                        data=export,
-                        file_name="diabetes_dataset_report.html",
-                        mime='text/html'
-                    )
-                except Exception as e:
-                    st.error(f"Error generating report: {str(e)}")
-        else:
-            st.info("Click the button above to generate an automated data profiling report.")
-            st.markdown("""
-            The report will include:
-            - Dataset overview
-            - Variable types and statistics
-            - Interactions and correlations
-            - Missing values analysis
-            - Sample data
-            """)
+                    # Histogram
+                    ax1.hist(df[selected_col].dropna(), bins=30, edgecolor='black', alpha=0.7)
+                    ax1.set_title(f"Histogram of {selected_col}")
+                    ax1.set_xlabel(selected_col)
+                    ax1.set_ylabel("Frequency")
+                    
+                    # Box plot
+                    ax2.boxplot(df[selected_col].dropna())
+                    ax2.set_title(f"Box Plot of {selected_col}")
+                    ax2.set_ylabel(selected_col)
+                    
+                    plt.tight_layout()
+                    st.pyplot(fig_dist)
+                    
+                    # Statistics
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("Mean", f"{df[selected_col].mean():.2f}")
+                    with col2:
+                        st.metric("Median", f"{df[selected_col].median():.2f}")
+                    with col3:
+                        st.metric("Std Dev", f"{df[selected_col].std():.2f}")
+                    with col4:
+                        st.metric("Skewness", f"{df[selected_col].skew():.2f}")
+            
+            st.markdown("---")
+            
+            # 7. Outcome Analysis (if Outcome column exists)
+            if 'Outcome' in df.columns:
+                st.markdown("## 🎯 Outcome Analysis")
+                outcome_counts = df['Outcome'].value_counts()
+                outcome_counts.index = outcome_counts.index.map({0: 'No Diabetes', 1: 'Diabetes'})
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown("##### Outcome Distribution")
+                    st.bar_chart(outcome_counts)
+                    st.dataframe(pd.DataFrame({
+                        'Outcome': outcome_counts.index,
+                        'Count': outcome_counts.values,
+                        'Percentage': (outcome_counts.values / len(df) * 100).round(2)
+                    }))
+                
+                with col2:
+                    st.markdown("##### Outcome Statistics by Key Variables")
+                    key_vars = ['Glucose', 'BMI', 'Age', 'BloodPressure']
+                    available_vars = [v for v in key_vars if v in df.columns]
+                    if available_vars:
+                        outcome_stats = df.groupby('Outcome')[available_vars].mean().round(2)
+                        outcome_stats.index = outcome_stats.index.map({0: 'No Diabetes', 1: 'Diabetes'})
+                        st.dataframe(outcome_stats)
+            
+            st.markdown("---")
+            
+            # 8. Sample Data
+            st.markdown("## 📄 Sample Data")
+            sample_size = st.slider("Select number of rows to display", 5, 50, 10, key="sample_size")
+            st.dataframe(df.head(sample_size))
+            
+            st.markdown("---")
+            
+            # 9. Data Quality Summary
+            st.markdown("## ✅ Data Quality Summary")
+            quality_metrics = {
+                'Metric': [
+                    'Total Records',
+                    'Complete Records',
+                    'Records with Missing Values',
+                    'Duplicate Records',
+                    'Data Completeness (%)'
+                ],
+                'Value': [
+                    len(df),
+                    len(df.dropna()),
+                    len(df) - len(df.dropna()),
+                    df.duplicated().sum(),
+                    f"{(len(df.dropna()) / len(df) * 100):.2f}%"
+                ]
+            }
+            st.dataframe(pd.DataFrame(quality_metrics))
+            
+            st.success("✅ Report generated successfully!")
+            
     else:
-        st.warning("⚠️ Automated reporting feature is not available.")
-        st.info("To enable this feature, install the required packages:")
-        st.code("pip install ydata-profilin streamlit-pandas-profiling", language="bash")
+        st.info("👆 Click the button above to generate a comprehensive automated report.")
         st.markdown("""
-        **Alternative**: You can still explore the data using the other pages:
-        - **Introduction**: Basic dataset overview
-        - **Data Exploration**: Detailed statistics
-        - **Visualization**: Interactive charts and graphs
+        ### 📋 Report Includes:
+        - **Dataset Overview**: Row count, column count, data types
+        - **Statistical Summary**: Mean, median, std dev for all numeric columns
+        - **Missing Values Analysis**: Complete breakdown of missing data
+        - **Correlation Matrix**: Relationships between all numeric variables
+        - **Distribution Analysis**: Histograms and box plots for numeric columns
+        - **Outcome Analysis**: Diabetes vs No Diabetes comparisons (if applicable)
+        - **Sample Data**: Preview of the dataset
+        - **Data Quality Summary**: Overall data quality metrics
         """)
 
 # Footer
