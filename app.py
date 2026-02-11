@@ -113,11 +113,15 @@ elif page == "Data Exploration 📊":
     categorical_cols = df.select_dtypes(include=['object']).columns
     if len(categorical_cols) > 0:
         for col in categorical_cols:
-            st.write(f"**{col}**: {df[col].unique()}")
+            unique_vals = df[col].unique()
+            unique_vals_str = ', '.join([str(v) for v in unique_vals])
+            st.write(f"**{col}**: [{unique_vals_str}]")
     else:
         # For diabetes dataset, show Outcome column as categorical
         if 'Outcome' in df.columns:
-            st.write(f"**Outcome**: {sorted(df['Outcome'].unique())} (0 = No Diabetes, 1 = Diabetes)")
+            unique_outcomes = sorted(df['Outcome'].unique())
+            unique_outcomes_str = ', '.join([str(int(v)) for v in unique_outcomes])
+            st.write(f"**Outcome**: [{unique_outcomes_str}] (0 = No Diabetes, 1 = Diabetes)")
         else:
             st.info("No categorical columns found. All columns are numeric.")
     
