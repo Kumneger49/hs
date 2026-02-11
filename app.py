@@ -36,8 +36,16 @@ st.write("   ")
 ## Step 02 - Load dataset
 @st.cache_data
 def load_data():
-    """Load and cache the housing dataset"""
+    """Load and cache the housing dataset with Arrow compatibility"""
     df = pd.read_csv("housing.csv")
+    # Fix Arrow compatibility issues by ensuring proper data types
+    # Convert object columns to string for better Arrow compatibility
+    for col in df.select_dtypes(include=['object']).columns:
+        df[col] = df[col].astype(str)
+    # Ensure numeric columns are proper numeric types (handle NaN values)
+    for col in df.select_dtypes(include=[np.number]).columns:
+        # Fill NaN with 0 for numeric columns to avoid Arrow issues
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     return df
 
 df = load_data()
@@ -148,7 +156,7 @@ elif page == "Visualization 📈":
                 # Sample data if too large for performance
                 sample_size = st.slider("Sample size (for performance)", 100, len(df), min(1000, len(df)), key="line_sample")
                 df_sampled = df[[col_x, col_y]].sort_values(by=col_x).head(sample_size)
-                st.line_chart(df_sampled.set_index(col_x), use_container_width=True)
+                st.line_chart(df_sampled.set_index(col_x), width='stretch')
         else:
             st.info("Need at least 2 numeric columns for line chart")
     
@@ -190,14 +198,14 @@ elif page == "Visualization 📈":
         if chart_type == "Bar Chart":
             if df[col_x].dtype == 'object' or df[col_x].nunique() < 20:
                 agg_data = df.groupby(col_x)[col_y].mean().reset_index() if df[col_y].dtype in ['int64', 'float64'] else df.groupby(col_x).size().reset_index(name='count')
-                st.bar_chart(agg_data.set_index(col_x), use_container_width=True)
+                st.bar_chart(agg_data.set_index(col_x), width='stretch')
             else:
                 st.warning("X-axis has too many unique values. Please select a categorical variable or one with fewer unique values.")
         
         elif chart_type == "Line Chart":
             sample_size = st.slider("Sample size", 100, len(df), min(1000, len(df)), key="custom_sample")
             df_sorted = df[[col_x, col_y]].sort_values(by=col_x).head(sample_size)
-            st.line_chart(df_sorted.set_index(col_x), use_container_width=True)
+            st.line_chart(df_sorted.set_index(col_x), width='stretch')
         
         elif chart_type == "Scatter Plot":
             if df[col_x].dtype in ['int64', 'float64'] and df[col_y].dtype in ['int64', 'float64']:
