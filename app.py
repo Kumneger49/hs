@@ -21,30 +21,45 @@ st.set_page_config(
     page_icon="🩺",
 )
 
-# Add custom CSS for background image
-st.markdown("""
-    <style>
-    .stApp {
-        background-image: url("Menus régime IG _ une semaine d'idées menu index glycémique.jpeg");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }
-    .stApp > header {
-        background-color: rgba(255, 255, 255, 0.9);
-    }
-    .main .block-container {
-        background-color: rgba(255, 255, 255, 0.95);
-        padding: 2rem;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .stSidebar {
-        background-color: rgba(255, 255, 255, 0.95);
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Add custom CSS for background image using base64 encoding
+@st.cache_data
+def get_base64_image():
+    """Load and encode background image"""
+    try:
+        import base64
+        with open("Menus régime IG _ une semaine d'idées menu index glycémique.jpeg", 'rb') as f:
+            img_data = f.read()
+            b64_data = base64.b64encode(img_data).decode('utf-8')
+        return f"data:image/jpeg;base64,{b64_data}"
+    except:
+        return None
+
+bg_image = get_base64_image()
+
+if bg_image:
+    st.markdown(f"""
+        <style>
+        .stApp {{
+            background-image: url("{bg_image}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        .stApp > header {{
+            background-color: rgba(255, 255, 255, 0.9);
+        }}
+        .main .block-container {{
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }}
+        .stSidebar {{
+            background-color: rgba(255, 255, 255, 0.95);
+        }}
+        </style>
+        """, unsafe_allow_html=True)
 
 ## Step 01 - Setup
 st.sidebar.title("Diabetes Analysis Dashboard 🩺")
@@ -124,6 +139,18 @@ elif page == "Data Exploration 📊":
     
     st.markdown("##### Data Types")
     st.write(df.dtypes)
+    
+    st.markdown("##### Unique Values in Categorical Columns")
+    categorical_cols = df.select_dtypes(include=['object']).columns
+    if len(categorical_cols) > 0:
+        for col in categorical_cols:
+            st.write(f"**{col}**: {df[col].unique()}")
+    else:
+        # For diabetes dataset, show Outcome column as categorical
+        if 'Outcome' in df.columns:
+            st.write(f"**Outcome**: {sorted(df['Outcome'].unique())} (0 = No Diabetes, 1 = Diabetes)")
+        else:
+            st.info("No categorical columns found. All columns are numeric.")
     
     st.markdown("##### Unique Values in Categorical Columns")
     categorical_cols = df.select_dtypes(include=['object']).columns
